@@ -130,12 +130,21 @@
         <columns>token</columns>
         <underlying-index>users_token_uindex</underlying-index>
       </key>
-      <column id="33" parent="5" name="chat_id">
+      <column id="33" parent="5" name="relation_id">
+        <mandatory>1</mandatory>
+        <data-type>int(11)</data-type>
+        <sequence-identity>1</sequence-identity>
+      </column>
+      <column id="34" parent="5" name="chat_id">
         <data-type>int(11)</data-type>
       </column>
-      <column id="34" parent="5" name="user_id">
+      <column id="35" parent="5" name="user_id">
         <data-type>int(11)</data-type>
       </column>
+      <key id="36" parent="5" name="PRIMARY">
+        <columns>relation_id</columns>
+        <primary>1</primary>
+      </key>
     </database-model>
   </data-source>
 </component>

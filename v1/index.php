@@ -57,7 +57,7 @@ Flight::route('GET /my/chats', function () {
     while ($row = $query->fetch_array(MYSQLI_ASSOC)) {
         $chat_id = $row['chat_id'];
         $query_chat = $db->getConn()->query("SELECT * FROM chat_rooms WHERE chat_room_id='$chat_id'");
-        $my_rooms[] = $query_chat->fetch_assoc;
+        $my_rooms[] = $query_chat->fetch_assoc();
     }
 
     Flight::json($my_rooms, 200);
