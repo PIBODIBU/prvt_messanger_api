@@ -8,7 +8,6 @@
  */
 class DbHandler
 {
-
     private $conn;
 
     function __construct()
@@ -17,6 +16,14 @@ class DbHandler
         // opening db connection
         $db = new DbConnect();
         $this->conn = $db->connect();
+    }
+
+    /**
+     * @return database
+     */
+    public function getConn()
+    {
+        return $this->conn;
     }
 
     // updating user GCM registration ID
@@ -38,5 +45,10 @@ class DbHandler
         return $response;
     }
 
-
+    public function getUser($token)
+    {
+        $query = $this->conn->query("SELECT * FROM users WHERE BINARY token='$token'");
+        $user = $query->fetch_assoc();
+        return isset($user) ? $user : NULL;
+    }
 }

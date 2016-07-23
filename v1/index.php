@@ -7,6 +7,13 @@ require_once '../include/db_handler.php';
 require '../libs/flight/Flight.php';
 require_once '../include/config.php';
 
+// Register class with constructor parameters
+Flight::register('db', 'mysqli', array(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME));
+
+// Set encoding to UTF8
+Flight::db()->query("SET NAMES utf8");
+
+
 // User login
 Flight::route('/user/login', function () {
 
@@ -25,6 +32,35 @@ Flight::route('POST /user/@id', function ($id) {
     $response = $db->updateGcmID($id, $gcm_registration_id);
 
     Flight::json($response, 200);
+});
+
+Flight::route('GET /my/chats', function () {
+    verifyRequiredParams(array('token'));
+
+    $db = new DbHandler();
+    $my_rooms = array();
+
+    $user = $db->getUser($_GET['token']);
+
+    if ($user == NULL) {
+        $response = array();
+        $response['error'] = TRUE;
+        $response['error_msg'] = 'Can\'t fetch user';
+        Flight::json($response);
+    }
+
+    $user_id = $user['user_id'];
+
+    // Get all chat relations
+    $query = $db->getConn()->query("SELECT * FROM chat_relations WHERE user_id='$user_id'");
+
+    while ($row = $query->fetch_array(MYSQLI_ASSOC)) {
+        $chat_id = $row['chat_id'];
+        $query_chat = $db->getConn()->query("SELECT * FROM chat_rooms WHERE chat_room_id='$chat_id'");
+        $my_rooms[] = $query_chat->fetch_assoc;
+    }
+
+    Flight::json($my_rooms, 200);
 });
 
 /**
@@ -67,11 +103,5 @@ function validateEmail($email)
         Flight::json($response, 400);
     }
 }
-
-// Register class with constructor parameters
-Flight::register('db', 'mysqli', array(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME));
-
-// Set encoding to UTF8
-Flight::db()->query("SET NAMES utf8");
 
 Flight::start();
