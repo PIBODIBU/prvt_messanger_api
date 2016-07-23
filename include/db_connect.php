@@ -29,7 +29,7 @@ class DbConnect
             echo "Failed to connect to MySQL: " . mysqli_connect_error();
         }
 
-        // returing connection resource
+        // Returning connection resource
         return $this->conn;
     }
 }
