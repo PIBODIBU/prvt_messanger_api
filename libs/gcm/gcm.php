@@ -14,7 +14,7 @@ class GCM
     {
         $fields = array(
             'to' => $to,
-            'data' => $message,
+            'data' => array('message' => $message),
         );
         return $this->sendPushNotification($fields);
     }
@@ -48,7 +48,7 @@ class GCM
         include_once __DIR__ . '/../../include/config.php';
 
         // Set POST variables
-        $url = 'https://gcm-http.googleapis.com/gcm/send';
+        $url = 'https://fcm.googleapis.com/fcm/send';
 
         $headers = array(
             'Authorization: key=' . GOOGLE_API_KEY,
@@ -82,5 +82,3 @@ class GCM
     }
 
 }
-
-?>

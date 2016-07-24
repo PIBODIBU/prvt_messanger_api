@@ -3,7 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="c4da6923-7050-4c17-ab46-7192007188d7" name="nauguide.esy.es" url="http://31.220.16.152">
-        <fileTransfer host="31.220.16.152" port="21" rootFolder="/public_html" username="u682172187">
+        <fileTransfer host="31.220.16.152" port="21" rootFolder="/public_html" password="dfc6dfdadff3df9bdfc5dfc4df92dfe1dfe3dfc0" username="u682172187">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" />
           </advancedOptions>

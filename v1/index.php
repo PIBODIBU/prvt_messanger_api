@@ -6,17 +6,38 @@ ini_set('display_errors', 'On');
 require_once '../include/db_handler.php';
 require '../libs/flight/Flight.php';
 require_once '../include/config.php';
+require_once '../libs/gcm/gcm.php';
 
 // Register class with constructor parameters
 Flight::register('db', 'mysqli', array(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME));
+Flight::register('dbH', 'DBHandler');
 
 // Set encoding to UTF8
 Flight::db()->query("SET NAMES utf8");
 
 
 // User login
-Flight::route('/user/login', function () {
+Flight::route('POST /user/login', function () {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+    $password = md5($password);
 
+    $query = Flight::dbH()->query("SELECT * FROM users WHERE BINARY username='$username' AND BINARY password='$password'");
+    $result = $query->fetch_assoc();
+
+    if (isset($result)) {
+
+    } else {
+
+    }
+});
+
+Flight::route('GET /notification', function () {
+    $gcm = new GCM();
+
+    $response = $gcm->send('cJLZVeKxHIo:APA91bEip8YnqqI7Uk1gMpEXI-chtAKvlcInD7Krzc2mvtHDi5eUMhSaYp4dLO2ybG2ogY4bRm6kivHpVVZf9Mt1Cmp9HVGS15nvmY4tfo2Y2TsfpT4aXNF8mSmkDKOg45YUEKWXgvel', array('text', 'FROM FLIGHT'));
+
+    Flight::json($response);
 });
 
 /* * *
