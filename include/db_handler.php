@@ -27,10 +27,10 @@ class DbHandler
     }
 
     // updating user GCM registration ID
-    public function updateGcmID($user_id, $gcm_registration_id)
+    public function updateGcmID($token, $gcm_registration_id)
     {
         $response = array();
-        $query = $this->conn->query("UPDATE users SET gcm_registration_id = '$gcm_registration_id' WHERE user_id = '$user_id'");
+        $query = $this->conn->query("UPDATE users SET gcm_registration_id = '$gcm_registration_id' WHERE BINARY token = '$token'");
 
         if ($query) {
             // User successfully updated
@@ -50,5 +50,10 @@ class DbHandler
         $query = $this->conn->query("SELECT * FROM users WHERE BINARY token='$token'");
         $user = $query->fetch_assoc();
         return isset($user) ? $user : NULL;
+    }
+
+    public function query($sql)
+    {
+        return $this->getConn()->query($sql);
     }
 }

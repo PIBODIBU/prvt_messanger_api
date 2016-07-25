@@ -4,8 +4,9 @@ error_reporting(-1);
 ini_set('display_errors', 'On');
 
 require_once '../include/db_handler.php';
-require '../libs/flight/Flight.php';
 require_once '../include/config.php';
+require_once '../include/utils.php';
+require '../libs/flight/Flight.php';
 require_once '../libs/gcm/gcm.php';
 
 // Register class with constructor parameters
@@ -15,21 +16,44 @@ Flight::register('dbH', 'DBHandler');
 // Set encoding to UTF8
 Flight::db()->query("SET NAMES utf8");
 
-
 // User login
 Flight::route('POST /user/login', function () {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    $password = md5($password);
+    $name = $_POST['name'];
+    $phone = $_POST['phone'];
+    $token = generateToken();
+    $response = array();
 
-    $query = Flight::dbH()->query("SELECT * FROM users WHERE BINARY username='$username' AND BINARY password='$password'");
-    $result = $query->fetch_assoc();
+    verifyRequiredParams(array('name', 'phone'));
 
-    if (isset($result)) {
+    $query = Flight::dbH()->query("SELECT * FROM users WHERE phone='$phone'");
+    $user = $query->fetch_assoc();
 
+    if (isset($user)) {
+        // Пользовательно авторизовался ранее
+
+        $response['error'] = false;
+        $response['user'] = $user;
     } else {
+        // Пользовательно авторизуется впервые
 
+        // Adding new user to Db
+        $query = Flight::dbH()->query("INSERT INTO users(token, name, email, phone, gcm_registration_id) VALUES ('$token', '$name','','$phone','')");
+
+        if ($query) {
+            // User added
+            $user = Flight::dbH()->getUser($token);
+
+            $response['error'] = false;
+            $response['user'] = $user;
+        } else {
+            // Error occurred during SQL query
+
+            $response['error'] = true;
+            $response['error_msg'] = 'Error occurred during login';
+        }
     }
+
+    Flight::json($response, 200);
 });
 
 Flight::route('GET /notification', function () {
@@ -44,13 +68,14 @@ Flight::route('GET /notification', function () {
  * Updating user
  *  we use this url to update user's gcm registration id
  */
-Flight::route('POST /user/@id', function ($id) {
-    verifyRequiredParams(array('gcm_registration_id'));
+Flight::route('POST /my/gcm/id/update', function () {
+    verifyRequiredParams(array('gcm_registration_id', 'token'));
 
     $gcm_registration_id = $_POST['gcm_registration_id'];
+    $token = $_POST['token'];
 
     $db = new DbHandler();
-    $response = $db->updateGcmID($id, $gcm_registration_id);
+    $response = $db->updateGcmID($token, $gcm_registration_id);
 
     Flight::json($response, 200);
 });
@@ -77,8 +102,15 @@ Flight::route('GET /my/chats', function () {
 
     while ($row = $query->fetch_array(MYSQLI_ASSOC)) {
         $chat_id = $row['chat_id'];
-        $query_chat = $db->getConn()->query("SELECT * FROM chat_rooms WHERE chat_room_id='$chat_id'");
-        $my_rooms[] = $query_chat->fetch_assoc();
+
+        $query_chat = Flight::dbH()->query("SELECT * FROM chat_rooms WHERE chat_room_id='$chat_id'");
+        $query_messages = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY message_id DESC");
+
+        $last_message = $query_messages->fetch_assoc();
+        $chat = $query_chat->fetch_assoc();
+
+        $chat['last_message'] = $last_message;
+        $my_rooms[] = $chat;
     }
 
     Flight::json($my_rooms, 200);

@@ -2,14 +2,12 @@
 
 class GCM
 {
-
-    // constructor
     function __construct()
     {
 
     }
 
-    // sending push message to single user by gcm registration id
+    // Sending push message to single user by gcm registration id
     public function send($to, $message)
     {
         $fields = array(
@@ -29,7 +27,7 @@ class GCM
         return $this->sendPushNotification($fields);
     }
 
-    // sending push message to multiple users by gcm registration ids
+    // Sending push message to multiple users by gcm registration ids
     public function sendMultiple($registration_ids, $message)
     {
         $fields = array(
@@ -40,10 +38,9 @@ class GCM
         return $this->sendPushNotification($fields);
     }
 
-    // function makes curl request to gcm servers
+    // Function makes curl request to gcm servers
     private function sendPushNotification($fields)
     {
-
         // include config
         include_once __DIR__ . '/../../include/config.php';
 
@@ -54,6 +51,7 @@ class GCM
             'Authorization: key=' . GOOGLE_API_KEY,
             'Content-Type: application/json'
         );
+
         // Open connection
         $ch = curl_init();
 
