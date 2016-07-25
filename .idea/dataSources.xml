@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DataSourceManagerImpl" format="xml" hash="3352564167">
+  <component name="DataSourceManagerImpl" format="xml" hash="2904101337">
     <data-source source="LOCAL" name="MySQL - gcm_chat@207.244.95.136" uuid="62608150-38e6-42a8-87bd-4f1799363724">
       <driver-ref>mysql</driver-ref>
       <synchronize>true</synchronize>

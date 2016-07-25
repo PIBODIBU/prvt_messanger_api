@@ -15,6 +15,7 @@ Flight::register('dbH', 'DBHandler');
 
 // Set encoding to UTF8
 Flight::db()->query("SET NAMES utf8");
+Flight::dbH()->query("SET NAMES utf8");
 
 // User login
 Flight::route('POST /user/login', function () {
@@ -83,10 +84,9 @@ Flight::route('POST /my/gcm/id/update', function () {
 Flight::route('GET /my/chats', function () {
     verifyRequiredParams(array('token'));
 
-    $db = new DbHandler();
     $my_rooms = array();
 
-    $user = $db->getUser($_GET['token']);
+    $user = Flight::dbH()->getUserByToken($_GET['token']);
 
     if ($user == NULL) {
         $response = array();
@@ -98,22 +98,61 @@ Flight::route('GET /my/chats', function () {
     $user_id = $user['user_id'];
 
     // Get all chat relations
-    $query = $db->getConn()->query("SELECT * FROM chat_relations WHERE user_id='$user_id'");
+    $query = Flight::dbH()->query("SELECT * FROM chat_relations WHERE user_id='$user_id'");
 
     while ($row = $query->fetch_array(MYSQLI_ASSOC)) {
         $chat_id = $row['chat_id'];
 
         $query_chat = Flight::dbH()->query("SELECT * FROM chat_rooms WHERE chat_room_id='$chat_id'");
         $query_messages = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY message_id DESC");
+        $query_participants = Flight::dbH()->query("SELECT * FROM chat_relations WHERE chat_id='$chat_id'");
 
         $last_message = $query_messages->fetch_assoc();
         $chat = $query_chat->fetch_assoc();
 
+        $chat['participants_count'] = $query_participants->num_rows;
+        while ($row = $query_participants->fetch_array(MYSQLI_ASSOC)) {
+            if ($row['user_id'] != $user_id) {
+                $user = Flight::dbH()->getUserById($row['user_id']);
+                $chat['participants'][] = $user;
+            }
+        }
         $chat['last_message'] = $last_message;
         $my_rooms[] = $chat;
     }
 
     Flight::json($my_rooms, 200);
+});
+
+Flight::route('GET /chat/@id/messages', function ($chat_id) {
+    $token = $_GET['token'];
+    $response = array();
+
+    verifyRequiredParams(array('token'));
+    if (!isTokenValid($token)) {
+        $response = array(
+            'error' => true,
+            'error_msg' => 'Bad token'
+        );
+        Flight::json($response, 400);
+    }
+
+    $user = Flight::dbH()->getUserByToken($token);
+
+    if (!Flight::dbH()->isItMyChat($user['user_id'], $chat_id)) {
+        $response = array(
+            'error' => true,
+            'error_msg' => 'It is not your chat'
+        );
+        Flight::json($response, 400);
+    }
+
+    $query = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY created_at DESC");
+    while ($message = $query->fetch_array(MYSQLI_ASSOC)) {
+        $response[] = $message;
+    }
+
+    Flight::json($response, 200);
 });
 
 /**
@@ -155,6 +194,13 @@ function validateEmail($email)
         $response["message"] = 'Email address is not valid';
         Flight::json($response, 400);
     }
+}
+
+function isTokenValid($token)
+{
+    $query = Flight::dbH()->query("SELECT * FROM users WHERE BINARY token='$token'");
+    $result = $query->fetch_assoc();
+    return isset($result);
 }
 
 Flight::start();

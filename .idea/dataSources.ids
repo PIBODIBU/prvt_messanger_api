@@ -18,7 +18,7 @@
       </column>
       <column id="7" parent="2" name="name">
         <mandatory>1</mandatory>
-        <data-type>varchar(100)</data-type>
+        <data-type>varchar(255)</data-type>
       </column>
       <column id="8" parent="2" name="created_at">
         <mandatory>1</mandatory>
