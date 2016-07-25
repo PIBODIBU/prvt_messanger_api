@@ -17,6 +17,14 @@ Flight::register('dbH', 'DBHandler');
 Flight::db()->query("SET NAMES utf8");
 Flight::dbH()->query("SET NAMES utf8");
 
+
+Flight::route('GET /test', function (){
+    $id = '2';
+    $message = 'kaka';
+
+   echo Flight::dbH()->is_chat_exists($id) ? "da":"net";
+});
+
 // User login
 Flight::route('POST /user/login', function () {
     $name = $_POST['name'];
@@ -153,12 +161,13 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
 
     $query = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY created_at DESC");
     while ($message = $query->fetch_array(MYSQLI_ASSOC)) {
-        $user = Flight::dbH()->getUserById($message['user_id'])['user_id'];
+        $user = Flight::dbH()->getUserById($message['user_id']);
         $message['sender'] = $user;
         $response[] = $message;
     }
 
 
+    /**
     echo '<head><meta charset="UTF-8"/></head>';
     echo '<pre>';
     print_r($response);
@@ -168,11 +177,37 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
     echo '<br/>';
     echo '<br/>';
     echo '<br/>';
-
-    //Flight::json($response, 200);
+*/
+    Flight::json($response, 200);
 });
 
+/**
+ * Когда пользователь добавляет новый контакт,
+ * создается новая комната
+ */
+Flight::route('GET /chat/create', function(){
+    $user1 = $_GET['user1'];
+    $user2 = $_GET['user2'];
 
+
+
+});
+
+/**
+ * Когда пользоветель отправляет новое сообщение,
+ * функция сохраняет его в базу и отправляет, кому нужно
+ */
+Flight::route('GET /chat/@id/on_message', function($chat_id){
+
+    $message = $_GET['message'];
+
+    Flight::dbH()->save_message($chat_id,$message);
+
+    $tokens = array();
+    $tokens = Flight::dbH()->get_users_from_chatrooms($chat_id);
+
+    $result = send_notification($tokens,$message);
+});
 /**
  * Verifying required params posted or not
  */
@@ -243,8 +278,7 @@ function send_notification($tokens, $message){
     );
 
     $headers = array(
-        'Authorization:key =
-            ',
+        'Authorization:key = AIzaSyC-u_9DBEZjBUeNZBFuxXF19vmIopNFRhs',
         'Content-Type: application/json'
     );
 
