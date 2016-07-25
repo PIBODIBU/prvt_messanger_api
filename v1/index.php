@@ -57,28 +57,32 @@ Flight::route('POST /user/login', function () {
     Flight::json($response, 200);
 });
 
-Flight::route('GET /notification', function () {
-    $gcm = new GCM();
+//get contact list
+Flight::route('GET /contacts', function (){
+    if(isset($_GET['token'])) {
 
-    $response = $gcm->send('cJLZVeKxHIo:APA91bEip8YnqqI7Uk1gMpEXI-chtAKvlcInD7Krzc2mvtHDi5eUMhSaYp4dLO2ybG2ogY4bRm6kivHpVVZf9Mt1Cmp9HVGS15nvmY4tfo2Y2TsfpT4aXNF8mSmkDKOg45YUEKWXgvel', array('text', 'FROM FLIGHT'));
 
-    Flight::json($response);
-});
+        $token = $_GET['token'];
 
-/* * *
- * Updating user
- *  we use this url to update user's gcm registration id
- */
-Flight::route('POST /my/gcm/id/update', function () {
-    verifyRequiredParams(array('gcm_registration_id', 'token'));
+        $user = Flight::dbH()->getUser($token);
 
-    $gcm_registration_id = $_POST['gcm_registration_id'];
-    $token = $_POST['token'];
+        if($user == NULL){
+            error("such token doesn't exist");
+        } else{
+            $users = array();
+            $users = Flight::dbH()->getAllUsersWithIgnore($user);
 
-    $db = new DbHandler();
-    $response = $db->updateGcmID($token, $gcm_registration_id);
+            Flight::json($users,200);
+        }
 
-    Flight::json($response, 200);
+
+
+    } else{
+        error("value token missed");
+    }
+
+
+
 });
 
 Flight::route('GET /my/chats', function () {
@@ -86,7 +90,7 @@ Flight::route('GET /my/chats', function () {
 
     $my_rooms = array();
 
-    $user = Flight::dbH()->getUserByToken($_GET['token']);
+    $user = Flight::dbH()->getUser($_GET['token']);
 
     if ($user == NULL) {
         $response = array();
@@ -137,7 +141,7 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
         Flight::json($response, 400);
     }
 
-    $user = Flight::dbH()->getUserByToken($token);
+    $user = Flight::dbH()->getUser($token);
 
     if (!Flight::dbH()->isItMyChat($user['user_id'], $chat_id)) {
         $response = array(
@@ -149,11 +153,25 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
 
     $query = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY created_at DESC");
     while ($message = $query->fetch_array(MYSQLI_ASSOC)) {
+        $user = Flight::dbH()->getUserById($message['user_id'])['user_id'];
+        $message['sender'] = $user;
         $response[] = $message;
     }
 
-    Flight::json($response, 200);
+
+    echo '<head><meta charset="UTF-8"/></head>';
+    echo '<pre>';
+    print_r($response);
+    echo '</pre>';
+
+    echo '<br/>';
+    echo '<br/>';
+    echo '<br/>';
+    echo '<br/>';
+
+    //Flight::json($response, 200);
 });
+
 
 /**
  * Verifying required params posted or not
@@ -203,4 +221,60 @@ function isTokenValid($token)
     return isset($result);
 }
 
+// error generation
+function error($message){
+    $response = array();
+    $response['error'] = true;
+    $response['message'] = $message;
+    Flight::json($response,400);
+}
+
+/**
+ * sending notifacation to firebase for
+ * that @tokens
+ * this @message
+ * */
+function send_notification($tokens, $message){
+    $url = 'https://fcm.googleapis.com/fcm/send';
+
+    $fields = array(
+        'registration_ids' => $tokens,
+        'data' => $message
+    );
+
+    $headers = array(
+        'Authorization:key =
+            ',
+        'Content-Type: application/json'
+    );
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+    $result = curl_exec($ch);
+    if($result === FALSE){
+        die('Curl failed: '. curl_error($ch));
+    }
+    cubrid_close($ch);
+
+    return $result;
+}
+
 Flight::start();
+
+
+
+
+
+
+
+
+
+
+
+

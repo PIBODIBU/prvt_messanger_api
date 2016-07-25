@@ -45,25 +45,37 @@ class DbHandler
         return $response;
     }
 
-    public function getUserByToken($token)
+    //Close connection
+    public function close(){
+        mysqli_close($this->conn);
+    }
+
+    public function getUserById($id)
+    {
+        $query = $this->conn->query("SELECT user_id,name,phone,email FROM users WHERE user_id='$id'");
+        $user = $query->fetch_assoc();
+        return $user;
+    }
+
+    public function getUser($token)
     {
         $query = $this->conn->query("SELECT * FROM users WHERE BINARY token='$token'");
         $user = $query->fetch_assoc();
         return isset($user) ? $user : NULL;
     }
 
-    public function getUserById($id)
-    {
-        $query = $this->conn->query("SELECT * FROM users WHERE user_id='$id'");
-        $user = $query->fetch_assoc();
-        return $user;
+    public function getAllUsersWithIgnore($ignoreUser){
+        $token = $ignoreUser['token'];
+        $query = $this->conn->query("SELECT user_id,name,phone FROM users WHERE BINARY token != '$token'");
+        $users = array();
+        while ($res = $query->fetch_assoc()){
+            array_push($users,$res);
+        }
+        return $users;
     }
 
-    public function getChatById($id)
-    {
-        $query = $this->conn->query("SELECT * FROM chat_rooms WHERE chat_room_id='$id'");
-        $user = $query->fetch_assoc();
-        return $user;
+    public function isUserExists(){
+
     }
 
     public function isItMyChat($user_id, $chat_id)
@@ -77,4 +89,6 @@ class DbHandler
     {
         return $this->getConn()->query($sql);
     }
+
+
 }
