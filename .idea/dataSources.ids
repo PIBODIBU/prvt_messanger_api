@@ -11,152 +11,140 @@
         <visible>1</visible>
       </schema>
       <schema id="2" name="admin_default"/>
-      <schema id="3" name="b170341_sand"/>
-      <schema id="4" name="information_schema"/>
-      <schema id="5" name="java_ee"/>
-      <schema id="6" name="mysql"/>
-      <schema id="7" name="performance_schema"/>
-      <schema id="8" name="phpmyadmin"/>
-      <schema id="9" name="roundcube"/>
-      <schema id="10" name="sando"/>
-      <schema id="11" name="site_info"/>
-      <schema id="12" name="test"/>
+      <schema id="3" name="information_schema"/>
+      <schema id="4" name="java_ee"/>
+      <schema id="5" name="mysql"/>
+      <schema id="6" name="performance_schema"/>
+      <schema id="7" name="phpmyadmin"/>
+      <schema id="8" name="roundcube"/>
+      <schema id="9" name="sando"/>
+      <schema id="10" name="site_info"/>
+      <schema id="11" name="test"/>
+      <schema id="12" name="wp_sand"/>
       <table id="13" parent="1" name="chat_relations"/>
       <table id="14" parent="1" name="chat_rooms"/>
       <table id="15" parent="1" name="messages"/>
-      <table id="16" parent="1" name="users"/>
-      <column id="17" parent="13" name="relation_id">
+      <table id="16" parent="1" name="users1"/>
+      <table id="17" parent="1" name="users"/>
+      <column id="18" parent="13" name="relation_id">
         <mandatory>1</mandatory>
         <data-type>int(11)|0</data-type>
         <sequence-identity>1</sequence-identity>
       </column>
-      <column id="18" parent="13" name="chat_id">
+      <column id="19" parent="13" name="chat_id">
         <data-type>int(11)|0</data-type>
       </column>
-      <column id="19" parent="13" name="user_id">
+      <column id="20" parent="13" name="user_id">
         <data-type>int(11)|0</data-type>
       </column>
-      <key id="20" parent="13" name="PRIMARY">
+      <key id="21" parent="13" name="PRIMARY">
         <columns>relation_id</columns>
         <primary>1</primary>
       </key>
-      <column id="21" parent="14" name="chat_room_id">
+      <column id="22" parent="14" name="chat_room_id">
         <mandatory>1</mandatory>
         <data-type>int(11)|0</data-type>
       </column>
-      <column id="22" parent="14" name="name">
+      <column id="23" parent="14" name="name">
         <mandatory>1</mandatory>
         <data-type>varchar(255)|0</data-type>
       </column>
-      <column id="23" parent="14" name="created_at">
+      <column id="24" parent="14" name="created_at">
         <mandatory>1</mandatory>
         <data-type>timestamp|0</data-type>
         <default-expression>CURRENT_TIMESTAMP</default-expression>
       </column>
-      <key id="24" parent="14" name="PRIMARY">
+      <key id="25" parent="14" name="PRIMARY">
         <columns>chat_room_id</columns>
         <primary>1</primary>
       </key>
-      <column id="25" parent="15" name="message_id">
+      <column id="26" parent="15" name="message_id">
         <mandatory>1</mandatory>
         <data-type>int(11)|0</data-type>
         <sequence-identity>1</sequence-identity>
       </column>
-      <column id="26" parent="15" name="chat_room_id">
+      <column id="27" parent="15" name="chat_room_id">
         <mandatory>1</mandatory>
         <data-type>int(11)|0</data-type>
       </column>
-      <column id="27" parent="15" name="user_id">
+      <column id="28" parent="15" name="user_id">
         <mandatory>1</mandatory>
         <data-type>int(11)|0</data-type>
       </column>
-      <column id="28" parent="15" name="message">
+      <column id="29" parent="15" name="message">
         <mandatory>1</mandatory>
-        <data-type>text|0</data-type>
+        <data-type>mediumtext|0</data-type>
       </column>
-      <column id="29" parent="15" name="created_at">
+      <column id="30" parent="15" name="created_at">
         <mandatory>1</mandatory>
         <data-type>timestamp|0</data-type>
         <default-expression>CURRENT_TIMESTAMP</default-expression>
       </column>
-      <index id="30" parent="15" name="chat_room_id">
-        <columns>chat_room_id</columns>
-        <desc-columns></desc-columns>
-      </index>
-      <index id="31" parent="15" name="chat_room_id_2">
-        <columns>chat_room_id</columns>
-        <desc-columns></desc-columns>
-      </index>
-      <index id="32" parent="15" name="user_id">
-        <columns>user_id</columns>
-        <desc-columns></desc-columns>
-      </index>
-      <key id="33" parent="15" name="PRIMARY">
+      <key id="31" parent="15" name="PRIMARY">
         <columns>message_id</columns>
         <primary>1</primary>
       </key>
-      <foreign-key id="34" parent="15" name="messages_ibfk_3">
-        <columns>chat_room_id</columns>
-        <ref-key>~.chat_rooms.PRIMARY</ref-key>
-        <cascade-update-rule>restrict</cascade-update-rule>
-        <cascade-delete-rule>restrict</cascade-delete-rule>
-      </foreign-key>
-      <foreign-key id="35" parent="15" name="messages_ibfk_2">
-        <columns>user_id</columns>
-        <ref-key>~.users.PRIMARY</ref-key>
-        <cascade-update-rule>update</cascade-update-rule>
-        <cascade-delete-rule>delete</cascade-delete-rule>
-      </foreign-key>
-      <column id="36" parent="16" name="user_id">
+      <column id="32" parent="16" name="user_id">
         <mandatory>1</mandatory>
         <data-type>int(11)|0</data-type>
         <sequence-identity>1</sequence-identity>
       </column>
-      <column id="37" parent="16" name="token">
+      <column id="33" parent="16" name="token">
         <mandatory>1</mandatory>
         <data-type>varchar(20)|0</data-type>
       </column>
-      <column id="38" parent="16" name="name">
+      <column id="34" parent="16" name="name">
         <mandatory>1</mandatory>
         <data-type>varchar(255)|0</data-type>
       </column>
-      <column id="39" parent="16" name="email">
+      <column id="35" parent="16" name="email">
         <mandatory>1</mandatory>
         <data-type>varchar(255)|0</data-type>
       </column>
-      <column id="40" parent="16" name="phone">
+      <column id="36" parent="16" name="phone">
         <data-type>varchar(255)|0</data-type>
       </column>
-      <column id="41" parent="16" name="gcm_registration_id">
+      <column id="37" parent="16" name="gcm_registration_id">
         <mandatory>1</mandatory>
         <data-type>text|0</data-type>
       </column>
-      <column id="42" parent="16" name="created_at">
+      <column id="38" parent="16" name="created_at">
         <mandatory>1</mandatory>
         <data-type>timestamp|0</data-type>
         <default-expression>CURRENT_TIMESTAMP</default-expression>
       </column>
-      <index id="43" parent="16" name="email">
-        <columns>email</columns>
-        <desc-columns></desc-columns>
-        <unique>1</unique>
-      </index>
-      <index id="44" parent="16" name="users_token_uindex">
-        <columns>token</columns>
-        <desc-columns></desc-columns>
-        <unique>1</unique>
-      </index>
-      <key id="45" parent="16" name="PRIMARY">
+      <key id="39" parent="16" name="PRIMARY">
         <columns>user_id</columns>
         <primary>1</primary>
       </key>
-      <key id="46" parent="16" name="users_token_uindex">
-        <columns>token</columns>
-        <underlying-index>users_token_uindex</underlying-index>
-      </key>
-      <key id="47" parent="16" name="email">
-        <columns>email</columns>
-        <underlying-index>email</underlying-index>
+      <column id="40" parent="17" name="user_id">
+        <mandatory>1</mandatory>
+        <data-type>int(11)|0</data-type>
+        <sequence-identity>1</sequence-identity>
+      </column>
+      <column id="41" parent="17" name="token">
+        <data-type>varchar(20)|0</data-type>
+      </column>
+      <column id="42" parent="17" name="name">
+        <data-type>varchar(255)|0</data-type>
+      </column>
+      <column id="43" parent="17" name="email">
+        <data-type>varchar(255)|0</data-type>
+      </column>
+      <column id="44" parent="17" name="phone">
+        <data-type>varchar(255)|0</data-type>
+      </column>
+      <column id="45" parent="17" name="gcm_registration_id">
+        <data-type>text|0</data-type>
+      </column>
+      <column id="46" parent="17" name="created_at">
+        <mandatory>1</mandatory>
+        <data-type>timestamp|0</data-type>
+        <default-expression>CURRENT_TIMESTAMP</default-expression>
+      </column>
+      <key id="47" parent="17" name="PRIMARY">
+        <columns>user_id</columns>
+        <primary>1</primary>
       </key>
     </database-model>
   </data-source>

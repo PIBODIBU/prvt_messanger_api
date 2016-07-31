@@ -18,19 +18,41 @@ Flight::db()->query("SET NAMES utf8");
 Flight::dbH()->query("SET NAMES utf8");
 
 
-Flight::route('GET /test', function (){
-    $id = '2';
+Flight::route('GET /test', function () {
+    /*
+    $id = 1;
     $message = 'kaka';
+    $author = 'pa1uuNuophuo2eechaix';
 
-   echo Flight::dbH()->is_chat_exists($id) ? "da":"net";
+    Flight::dbH()->save_message($id,$message,$author);
+*/
+
+    $some = array();
+    $some = Flight::dbH()->get_users_from_chatrooms_with_ignore(1, "9fcAVbPOgLKO10qqoWcx");
+    print_r($some);
 });
+
 
 // User login
 Flight::route('POST /user/login', function () {
     $name = $_POST['name'];
     $phone = $_POST['phone'];
-    $token = generateToken();
+
+
+    // Adding new user to Db
+    $token_generated = false;
+    while ($token_generated == false) {
+        $token = generateToken(20);
+        if (Flight::dbH()->is_token_occupied($token)) {
+            continue;
+        } else {
+            $token_generated = true;
+        }
+    }
+
+
     $response = array();
+    $error = array();
 
     verifyRequiredParams(array('name', 'phone'));
 
@@ -39,59 +61,78 @@ Flight::route('POST /user/login', function () {
 
     if (isset($user)) {
         // Пользовательно авторизовался ранее
+        if ($user['name'] != $name) {
+            $query = Flight::dbH()->query("UPDATE users SET name='$name' WHERE phone='$phone'");
+        }
+        $query = Flight::dbH()->query("UPDATE users SET token='$token' WHERE phone='$phone'");
 
-        $response['error'] = false;
+        $query = Flight::dbH()->query("SELECT * FROM users WHERE phone='$phone'");
+        $user = $query->fetch_assoc();
+
+        $error['error'] = false;
+        $error['error_msg'] = "";
         $response['user'] = $user;
     } else {
-        // Пользовательно авторизуется впервые
+        // Пользователь авторизуется впервые
 
-        // Adding new user to Db
-        $query = Flight::dbH()->query("INSERT INTO users(token, name, email, phone, gcm_registration_id) VALUES ('$token', '$name','','$phone','')");
+        //echo $token;
+
+        $query = Flight::dbH()->query("INSERT INTO users (token,name,phone) VALUES ('$token','$name','$phone')");;
 
         if ($query) {
             // User added
             $user = Flight::dbH()->getUser($token);
-
-            $response['error'] = false;
+            $error['error'] = false;
+            $error['error_msg'] = "";
             $response['user'] = $user;
         } else {
             // Error occurred during SQL query
 
-            $response['error'] = true;
-            $response['error_msg'] = 'Error occurred during login';
+            $error['error'] = true;
+            $error['error_msg'] = 'Error occurred during login';
         }
     }
+
+    $response['error'] = $error;
 
     Flight::json($response, 200);
 });
 
+
+Flight::route('POST /my/gcm/id/update', function () {
+    $token = $_POST['token'];
+    $gcm_registration_id = $_POST['gcm'];
+
+    Flight::dbH()->query("UPDATE users SET gcm_registration_id='$gcm_registration_id' WHERE users.token='$token'");
+});
+
+
 //get contact list
-Flight::route('GET /contacts', function (){
-    if(isset($_GET['token'])) {
+Flight::route('GET /contacts', function () {
+    if (isset($_GET['token'])) {
 
 
         $token = $_GET['token'];
 
         $user = Flight::dbH()->getUser($token);
 
-        if($user == NULL){
+        if ($user == NULL) {
             error("such token doesn't exist");
-        } else{
+        } else {
             $users = array();
             $users = Flight::dbH()->getAllUsersWithIgnore($user);
 
-            Flight::json($users,200);
+            Flight::json($users, 200);
         }
 
 
-
-    } else{
+    } else {
         error("value token missed");
     }
 
 
-
 });
+
 
 Flight::route('GET /my/chats', function () {
     verifyRequiredParams(array('token'));
@@ -136,8 +177,11 @@ Flight::route('GET /my/chats', function () {
     Flight::json($my_rooms, 200);
 });
 
+
 Flight::route('GET /chat/@id/messages', function ($chat_id) {
     $token = $_GET['token'];
+    $offset = $_GET['offset'];
+    $limit = $_GET['limit'];
     $response = array();
 
     verifyRequiredParams(array('token'));
@@ -159,55 +203,168 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
         Flight::json($response, 400);
     }
 
-    $query = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY created_at DESC");
-    while ($message = $query->fetch_array(MYSQLI_ASSOC)) {
-        $user = Flight::dbH()->getUserById($message['user_id']);
-        $message['sender'] = $user;
-        $response[] = $message;
+    $query = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY created_at DESC LIMIT $limit OFFSET $offset");
+
+    while ($message = $query->fetch_assoc()) {
+        if ($message) {
+            $user = Flight::dbH()->getUserById($message['user_id']);
+            $message['sender'] = $user;
+            $response[] = $message;
+        }
     }
 
 
     /**
-    echo '<head><meta charset="UTF-8"/></head>';
-    echo '<pre>';
-    print_r($response);
-    echo '</pre>';
-
-    echo '<br/>';
-    echo '<br/>';
-    echo '<br/>';
-    echo '<br/>';
-*/
+     * echo '<head><meta charset="UTF-8"/></head>';
+     * echo '<pre>';
+     * print_r($response);
+     * echo '</pre>';
+     *
+     * echo '<br/>';
+     * echo '<br/>';
+     * echo '<br/>';
+     * echo '<br/>';
+     */
     Flight::json($response, 200);
 });
 
+
 /**
- * Когда пользователь добавляет новый контакт,
- * создается новая комната
+ * Выход пользователя из аккаунта
  */
-Flight::route('GET /chat/create', function(){
-    $user1 = $_GET['user1'];
-    $user2 = $_GET['user2'];
+
+Flight::route('POST /user/logout', function () {
+    $token = $_POST['token'];
+    $response = array();
+
+    verifyRequiredParams(array('token'));
+
+    $query = Flight::dbH()->query("UPDATE users SET gcm_registration_id='' WHERE BINARY token='$token'");
+
+    if ($query) {
+        $response['error'] = false;
+        $response['error_msg'] = "";
+    } else {
+        $response['error'] = true;
+        $response['error_msg'] = "failed to logout";
+    }
 
 
+    Flight::json($response, 200);
+});
+
+
+/**
+ * Получение пользователей чата
+ */
+
+Flight::route('GET /chat/@id/users', function ($chat_id) {
+
+    $query = Flight::dbH()->query("SELECT user_id FROM chat_relations WHERE chat_id='$chat_id'");
+    while ($row = $query->fetch_assoc()) {
+        $result[] = $row;
+    }
+
+    Flight::json($result, 200);
+});
+
+
+/**
+ * Удаление диалога
+ */
+
+Flight::route('POST /chat/@id/delete', function ($chat_id) {
+
+    $query = Flight::dbH()->query("DELETE * FROM chat_relations WHERE chat_id='$chat_id'");
+    $query = Flight::dbH()->query("DELETE * FROM chat_rooms WHERE chat_room_id='$chat_id'");
 
 });
+
+
+/**
+ * Когда пользователь начинает общение впервые,
+ * создается новая комната
+ */
+Flight::route('POST /chat/create', function () {
+
+    $json = json_decode(file_get_contents('php://input'), true);
+
+    $chat_name = $json['chat_name'];
+    $user_list_id = array();
+
+    foreach ($json['user_ids'] as $id) {
+        $user_list_id[] = $id['user_id'];
+    }
+
+    //создать комнату в базе
+    $query = Flight::dbH()->query("INSERT INTO chat_rooms (name) VALUES ('$chat_name')");
+
+    //Получить айди комнаты чата
+    $query = Flight::dbH()->query("SELECT LAST_INSERT_ID() FROM chat_rooms");
+    $chat_room_id = $query->fetch_assoc()['LAST_INSERT_ID()'];
+
+    foreach ($user_list_id as $id) {
+        $query = Flight::dbH()->query("INSERT INTO chat_relations (chat_id, user_id) VALUES ('$chat_room_id','$id')");
+    }
+
+
+    //сгенерировать ответ
+
+    $query = Flight::dbH()->query("SELECT * FROM chat_rooms WHERE chat_room_id='$chat_room_id'");
+
+    $response = array();
+    $response['chat_room_id'] = $chat_room_id;
+    $response['name'] = $chat_name;
+    $response['created_at'] = $query->fetch_assoc()['created_at'];
+    $response['last_message'] = $query->fetch_assoc();
+    $response['participants_count'] = count($user_list_id);
+    $response['participants'] = array();
+
+
+    foreach ($user_list_id as $user) {
+        $participant = array();
+
+        $query = Flight::dbH()->query("SELECT * FROM users WHERE user_id='$user'");
+        $result = $query->fetch_assoc();
+
+        $participant['user_id'] = $user;
+        $participant['name'] = $result['name'];
+        $participant['phone'] = $result['phone'];
+        $participant['email'] = $result['email'];
+
+        array_push($response['participants'], $participant);
+    }
+
+    Flight::json($response, 200);
+});
+
 
 /**
  * Когда пользоветель отправляет новое сообщение,
  * функция сохраняет его в базу и отправляет, кому нужно
  */
-Flight::route('GET /chat/@id/on_message', function($chat_id){
+Flight::route('GET /chat/@id/on_message', function ($chat_id) {
 
     $message = $_GET['message'];
+    $author = $_GET['token'];
 
-    Flight::dbH()->save_message($chat_id,$message);
+    $response = Flight::dbH()->save_message_and_return_for_notification($chat_id, $message, $author);
 
     $tokens = array();
-    $tokens = Flight::dbH()->get_users_from_chatrooms($chat_id);
+    $tokens = Flight::dbH()->get_users_from_chatrooms_with_ignore($chat_id, $author);
 
-    $result = send_notification($tokens,$message);
+    $response_for_recipient = array();
+    $response_for_recipient = $response;
+    unset($response_for_recipient['error']);
+
+    send_notification($tokens, $response_for_recipient);
+
+
+    Flight::json($response, 200);
+
 });
+
+
 /**
  * Verifying required params posted or not
  */
@@ -237,6 +394,7 @@ function verifyRequiredParams($required_fields)
     }
 }
 
+
 /**
  * Validating email address
  */
@@ -249,6 +407,7 @@ function validateEmail($email)
     }
 }
 
+
 function isTokenValid($token)
 {
     $query = Flight::dbH()->query("SELECT * FROM users WHERE BINARY token='$token'");
@@ -256,12 +415,14 @@ function isTokenValid($token)
     return isset($result);
 }
 
+
 // error generation
-function error($message){
+function error($message)
+{
     $response = array();
     $response['error'] = true;
     $response['message'] = $message;
-    Flight::json($response,400);
+    Flight::json($response, 400);
 }
 
 /**
@@ -269,7 +430,8 @@ function error($message){
  * that @tokens
  * this @message
  * */
-function send_notification($tokens, $message){
+function send_notification($tokens, $message)
+{
     $url = 'https://fcm.googleapis.com/fcm/send';
 
     $fields = array(
@@ -291,10 +453,10 @@ function send_notification($tokens, $message){
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
     $result = curl_exec($ch);
-    if($result === FALSE){
-        die('Curl failed: '. curl_error($ch));
+    if ($result === FALSE) {
+        die('Curl failed: ' . curl_error($ch));
     }
-    cubrid_close($ch);
+    curl_close($ch);
 
     return $result;
 }
