@@ -404,13 +404,39 @@ Flight::route('GET /chat/@id/on_message', function ($chat_id) {
 
 });
 
-
-/**
- *
+/*
+ * Обновление информации о пользователе
  */
-Flight::route('GET ',function (){
+Flight::route('GET user/update', function (){
 
+    $token = '';
+    $name = '';
+    $email = '';
+    $responce = array();
+
+    if(isset($_GET['token'])){
+        $token = $_GET['token'];
+
+        if(isset($_GET['name'])){
+            $name = $_GET['name'];
+            $query = Flight::dbH()->query("UPDATE users SET name='$name' WHERE users.token='$token'");
+        }
+        if(isset($_GET['email'])){
+            $email = $_GET['email'];
+            $query = Flight::dbH()->query("UPDATE users SET email='$email' WHERE users.token = '$token'");
+        }
+
+        $responce['error'] = false;
+        $responce['error_msg'] = "";
+
+    } else{
+        $responce['error'] = true;
+        $responce['error_msg'] = "invalig user token";
+    }
+
+    Flight::json($responce,200);
 });
+
 
 /**
  * Verifying required params posted or not
@@ -509,15 +535,3 @@ function send_notification($tokens, $message)
 }
 
 Flight::start();
-
-
-
-
-
-
-
-
-
-
-
-

@@ -198,13 +198,6 @@ class DbHandler
         }
     }
 
-    //Создать чат
-    public function create_chat($name){
-        $query = $this->conn->query("INSERT INTO chat_rooms (name) VALUES '$name'");
-
-        //$query = $this->conn->query("INSERT INTO chat_relations");
-    }
-
 
 
     public function make_relation(){
