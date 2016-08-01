@@ -107,10 +107,9 @@ Flight::route('POST /my/gcm/id/update', function () {
 });
 
 
-//get contact list
+//get contact list --------------------
 Flight::route('GET /contacts', function () {
     if (isset($_GET['token'])) {
-
 
         $token = $_GET['token'];
 
@@ -133,7 +132,7 @@ Flight::route('GET /contacts', function () {
 
 });
 
-//get my chatlist
+//get my chatlist +++++++++++++++++++++
 Flight::route('GET /my/chats', function () {
 
     verifyRequiredParams(array('token'));
@@ -201,11 +200,18 @@ Flight::route('GET /my/chats', function () {
 
     array_multisort($message_date, SORT_DESC, $information_for_sending);
 
-    Flight::json($information_for_sending, 200);
+    //Flight::json($my_rooms, 200);
+
+
+
+    echo '<head><meta charset="UTF-8"/></head>';
+    echo '<pre>';
+    print_r($information_for_sending);
+    echo '</pre>';
 
 });
 
-
+//++++++++++++++++++++++++++++==
 Flight::route('GET /chat/@id/messages', function ($chat_id) {
     $token = $_GET['token'];
     $offset = $_GET['offset'];
@@ -307,7 +313,7 @@ Flight::route('POST /chat/@id/delete', function ($chat_id) {
 
 
 /**
- * Когда пользователь начинает общение впервые,
+ * Когда пользователь начинает общение впервые, ------------------------
  * создается новая комната
  */
 Flight::route('POST /chat/create', function () {
@@ -321,8 +327,17 @@ Flight::route('POST /chat/create', function () {
         $user_list_id[] = $id['user_id'];
     }
 
+
+    $dilogue_type = false;
+
+    if(count($user_list_id) > 2){
+        $dilogue_type = true;
+    } else{
+
+    }
+
     //создать комнату в базе
-    $query = Flight::dbH()->query("INSERT INTO chat_rooms (name) VALUES ('$chat_name')");
+    $query = Flight::dbH()->query("INSERT INTO chat_rooms (name,type) VALUES ('$chat_name','$dilogue_type')");
 
     //Получить айди комнаты чата
     $query = Flight::dbH()->query("SELECT LAST_INSERT_ID() FROM chat_rooms");
