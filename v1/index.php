@@ -407,7 +407,7 @@ Flight::route('GET /chat/@id/on_message', function ($chat_id) {
 /*
  * Обновление информации о пользователе
  */
-Flight::route('GET user/update', function (){
+Flight::route('GET /user/update', function (){
 
     $token = '';
     $name = '';
