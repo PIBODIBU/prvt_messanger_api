@@ -133,13 +133,16 @@ Flight::route('GET /contacts', function () {
 
 });
 
-
+//get my chatlist
 Flight::route('GET /my/chats', function () {
+
     verifyRequiredParams(array('token'));
+
+    $token = $_GET['token'];
 
     $my_rooms = array();
 
-    $user = Flight::dbH()->getUser($_GET['token']);
+    $user = Flight::dbH()->getUser($token);
 
     if ($user == NULL) {
         $response = array();
@@ -150,31 +153,56 @@ Flight::route('GET /my/chats', function () {
 
     $user_id = $user['user_id'];
 
-    // Get all chat relations
+    // Получить все связи пользователя что бы получить айди чатов с ним
     $query = Flight::dbH()->query("SELECT * FROM chat_relations WHERE user_id='$user_id'");
 
-    while ($row = $query->fetch_array(MYSQLI_ASSOC)) {
+    $message_date = array();
+    $information_for_sending = array();
+
+    //for all chat relations get all chat rooms,
+    $i = 0;
+
+    while ($row = $query->fetch_assoc()) {
+
+        //get chat id
         $chat_id = $row['chat_id'];
 
-        $query_chat = Flight::dbH()->query("SELECT * FROM chat_rooms WHERE chat_room_id='$chat_id'");
-        $query_messages = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY message_id DESC");
-        $query_participants = Flight::dbH()->query("SELECT * FROM chat_relations WHERE chat_id='$chat_id'");
+        //get chat name
+        $query_chat = Flight::dbH()->query("SELECT name,type FROM chat_rooms WHERE chat_room_id='$chat_id'");
+        $result = $query_chat->fetch_assoc();
+        $chat_name = $result['name'];
+        $chat_type = $result['type']; //chat type: 0-dialogue, 1-conference
 
-        $last_message = $query_messages->fetch_assoc();
-        $chat = $query_chat->fetch_assoc();
 
-        $chat['participants_count'] = $query_participants->num_rows;
-        while ($row = $query_participants->fetch_array(MYSQLI_ASSOC)) {
-            if ($row['user_id'] != $user_id) {
-                $user = Flight::dbH()->getUserById($row['user_id']);
-                $chat['participants'][] = $user;
-            }
+        //get last message and date of send
+        $query_messages = Flight::dbH()->query("SELECT message,message_id FROM messages WHERE chat_room_id='$chat_id' ORDER BY message_id DESC LIMIT 0,1");
+        $result = $query_messages->fetch_assoc();
+        $last_message = $result['message'];
+        $last_message_id = $result['message_id'];
+
+
+        if(!$chat_type){
+            //dialogue
+            $query_relation = Flight::dbH()->query("SELECT user_id FROM chat_relations WHERE chat_id='$chat_id' AND user_id!='$user_id'");
+            $result = $query_relation->fetch_assoc();
+            $interlocutor = $result['user_id'];
+            $query_relation = Flight::dbH()->query("SELECT name FROM users WHERE user_id='$interlocutor'");
+
+            $chat_name = $query_relation->fetch_assoc()['name'];
         }
-        $chat['last_message'] = $last_message;
-        $my_rooms[] = $chat;
+
+        $message_date[$i] = $last_message_id;
+        $information_for_sending[$i]['chat_id'] = $chat_id;
+        $information_for_sending[$i]['chat_name'] = $chat_name;
+        $information_for_sending[$i]['last_message'] = $last_message;
+
+        $i++;
     }
 
-    Flight::json($my_rooms, 200);
+    array_multisort($message_date, SORT_DESC, $information_for_sending);
+
+    Flight::json($information_for_sending, 200);
+
 });
 
 
@@ -232,7 +260,6 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
 /**
  * Выход пользователя из аккаунта
  */
-
 Flight::route('POST /user/logout', function () {
     $token = $_POST['token'];
     $response = array();
@@ -257,7 +284,6 @@ Flight::route('POST /user/logout', function () {
 /**
  * Получение пользователей чата
  */
-
 Flight::route('GET /chat/@id/users', function ($chat_id) {
 
     $query = Flight::dbH()->query("SELECT user_id FROM chat_relations WHERE chat_id='$chat_id'");
@@ -272,7 +298,6 @@ Flight::route('GET /chat/@id/users', function ($chat_id) {
 /**
  * Удаление диалога
  */
-
 Flight::route('POST /chat/@id/delete', function ($chat_id) {
 
     $query = Flight::dbH()->query("DELETE * FROM chat_relations WHERE chat_id='$chat_id'");
@@ -364,6 +389,13 @@ Flight::route('GET /chat/@id/on_message', function ($chat_id) {
 
 });
 
+
+/**
+ *
+ */
+Flight::route('GET ',function (){
+
+});
 
 /**
  * Verifying required params posted or not

@@ -12,7 +12,7 @@
       <paths name="nauguide.esy.es">
         <serverdata>
           <mappings>
-            <mapping deploy="/private_msg" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/bogdan" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

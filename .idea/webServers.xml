@@ -13,6 +13,14 @@
       <webServer id="81ce4ed1-cbe5-42bb-87e1-0d642d6d8ee4" name="localhost" url="http://localhost">
         <fileTransfer port="0" mountedRoot="/var/www/html" accessType="MOUNT" />
       </webServer>
+      <webServer id="6e9de8d8-fc57-40c3-8ee8-492f0d928893" name="http://138.201.140.146/" url="http://138.201.140.146/">
+        <fileTransfer host="138.201.140.146" port="21" username="ftp_user@team-test.info">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="21" />
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

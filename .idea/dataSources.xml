@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DataSourceManagerImpl" format="xml" hash="2981104776">
-    <data-source source="LOCAL" name="MySQL - gcm_chat@207.244.95.136" uuid="62608150-38e6-42a8-87bd-4f1799363724">
+  <component name="DataSourceManagerImpl" format="xml" hash="2620082443">
+    <data-source source="LOCAL" name="MySQL - teamtest_prvt_chat@138.201.140.146" uuid="f6616405-d77b-48d3-889a-a274bd714fdf">
       <driver-ref>mysql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://207.244.95.136:3306/gcm_chat</jdbc-url>
+      <jdbc-url>jdbc:mysql://138.201.140.146:3306/teamtest_prvt_chat</jdbc-url>
       <driver-properties>
         <property name="autoReconnect" value="true" />
         <property name="zeroDateTimeBehavior" value="convertToNull" />
