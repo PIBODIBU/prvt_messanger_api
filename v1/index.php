@@ -33,13 +33,21 @@ Flight::route('GET /test', function () {
 });
 
 
-// User login
+/**
+ * Entering user into app
+ * input values:
+ * @name
+ * @phone
+ *
+ * Output values:
+ * @error
+ * @error_msg
+ * @user - array with all information about user
+ */
 Flight::route('POST /user/login', function () {
     $name = $_POST['name'];
     $phone = $_POST['phone'];
-
-
-    // Adding new user to Db
+// Adding new user to Db
     $token_generated = false;
     while ($token_generated == false) {
         $token = generateToken(20);
@@ -49,56 +57,45 @@ Flight::route('POST /user/login', function () {
             $token_generated = true;
         }
     }
-
-
     $response = array();
     $error = array();
-
     verifyRequiredParams(array('name', 'phone'));
-
     $query = Flight::dbH()->query("SELECT * FROM users WHERE phone='$phone'");
     $user = $query->fetch_assoc();
-
     if (isset($user)) {
-        // Пользовательно авторизовался ранее
+// Пользовательно авторизовался ранее
         if ($user['name'] != $name) {
             $query = Flight::dbH()->query("UPDATE users SET name='$name' WHERE phone='$phone'");
         }
         $query = Flight::dbH()->query("UPDATE users SET token='$token' WHERE phone='$phone'");
-
         $query = Flight::dbH()->query("SELECT * FROM users WHERE phone='$phone'");
         $user = $query->fetch_assoc();
-
         $error['error'] = false;
         $error['error_msg'] = "";
         $response['user'] = $user;
     } else {
-        // Пользователь авторизуется впервые
-
-        //echo $token;
-
+// Пользователь авторизуется впервые
+//echo $token;
         $query = Flight::dbH()->query("INSERT INTO users (token,name,phone) VALUES ('$token','$name','$phone')");;
-
         if ($query) {
-            // User added
+// User added
             $user = Flight::dbH()->getUser($token);
             $error['error'] = false;
             $error['error_msg'] = "";
             $response['user'] = $user;
         } else {
-            // Error occurred during SQL query
-
+// Error occurred during SQL query
             $error['error'] = true;
             $error['error_msg'] = 'Error occurred during login';
         }
     }
-
     $response['error'] = $error;
-
     Flight::json($response, 200);
 });
 
-
+/**
+ *
+ */
 Flight::route('POST /my/gcm/id/update', function () {
     $token = $_POST['token'];
     $gcm_registration_id = $_POST['gcm'];
@@ -132,8 +129,22 @@ Flight::route('GET /contacts', function () {
 
 });
 
-//get my chatlist +++++++++++++++++++++
+/**
+ * Get chatlist of user
+ * input values:
+ * @token
+ *
+ * output values:
+ * @chat_id
+ * @chat_name
+ * @last_message
+ * @last_message_time
+ */
 Flight::route('GET /my/chats', function () {
+
+    $limit = $_GET['limit'];
+    $offset = $_GET['offset'];
+
 
     verifyRequiredParams(array('token'));
 
@@ -167,17 +178,18 @@ Flight::route('GET /my/chats', function () {
         $chat_id = $row['chat_id'];
 
         //get chat name
-        $query_chat = Flight::dbH()->query("SELECT name,type FROM chat_rooms WHERE chat_room_id='$chat_id'");
+        $query_chat = Flight::dbH()->query("SELECT name,type FROM chat_rooms WHERE chat_room_id='$chat_id' LIMIT $offset,$limit");
         $result = $query_chat->fetch_assoc();
         $chat_name = $result['name'];
         $chat_type = $result['type']; //chat type: 0-dialogue, 1-conference
 
 
         //get last message and date of send
-        $query_messages = Flight::dbH()->query("SELECT message,message_id FROM messages WHERE chat_room_id='$chat_id' ORDER BY message_id DESC LIMIT 0,1");
+        $query_messages = Flight::dbH()->query("SELECT message,message_id,created_at FROM messages WHERE chat_room_id='$chat_id' ORDER BY message_id DESC LIMIT 0,1");
         $result = $query_messages->fetch_assoc();
         $last_message = $result['message'];
         $last_message_id = $result['message_id'];
+        $last_message_time = $result['created_at'];
 
 
         if(!$chat_type){
@@ -190,28 +202,33 @@ Flight::route('GET /my/chats', function () {
             $chat_name = $query_relation->fetch_assoc()['name'];
         }
 
-        $message_date[$i] = $last_message_id;
-        $information_for_sending[$i]['chat_id'] = $chat_id;
-        $information_for_sending[$i]['chat_name'] = $chat_name;
-        $information_for_sending[$i]['last_message'] = $last_message;
+        $last_message_array = array();
+        $last_message_array['message'] = $last_message;
+        $last_message_array['created_at'] = $last_message_time;
 
+        $message_date[$i] = $last_message_id;
+        $information_for_sending[$i]['chat_room_id'] = $chat_id;
+        $information_for_sending[$i]['name'] = $chat_name;
+        $information_for_sending[$i]['last_message'] = $last_message_array;
         $i++;
     }
 
     array_multisort($message_date, SORT_DESC, $information_for_sending);
 
-    //Flight::json($my_rooms, 200);
+    Flight::json($information_for_sending, 200);
 
 
-
+/*
     echo '<head><meta charset="UTF-8"/></head>';
     echo '<pre>';
     print_r($information_for_sending);
     echo '</pre>';
-
+*/
 });
 
-//++++++++++++++++++++++++++++==
+/**
+ *
+ */
 Flight::route('GET /chat/@id/messages', function ($chat_id) {
     $token = $_GET['token'];
     $offset = $_GET['offset'];
@@ -292,12 +309,18 @@ Flight::route('POST /user/logout', function () {
  */
 Flight::route('GET /chat/@id/users', function ($chat_id) {
 
+    $users = array();
+
     $query = Flight::dbH()->query("SELECT user_id FROM chat_relations WHERE chat_id='$chat_id'");
     while ($row = $query->fetch_assoc()) {
-        $result[] = $row;
+        $user_id = $row['user_id'];
+        $query_user = Flight::dbH()->query("SELECT * FROM users WHERE user_id='$user_id'");
+        while ($row_users = $query_user->fetch_assoc()){
+            $users[] = $row_users;
+        }
     }
 
-    Flight::json($result, 200);
+    Flight::json($users, 200);
 });
 
 
@@ -306,9 +329,22 @@ Flight::route('GET /chat/@id/users', function ($chat_id) {
  */
 Flight::route('POST /chat/@id/delete', function ($chat_id) {
 
-    $query = Flight::dbH()->query("DELETE * FROM chat_relations WHERE chat_id='$chat_id'");
-    $query = Flight::dbH()->query("DELETE * FROM chat_rooms WHERE chat_room_id='$chat_id'");
+    $token = $_POST['token'];
 
+    $request = array();
+
+    if(Flight::dbH()->getUser($token) === NULL){
+        $request['error']  = true;
+        $request['error_msg'] = "can't fatch user";
+    } else{
+        $query = Flight::dbH()->query("DELETE * FROM chat_relations WHERE chat_id='$chat_id'");
+        $query = Flight::dbH()->query("DELETE * FROM chat_rooms WHERE chat_room_id='$chat_id'");
+
+        $request['error'] = false;
+        $request['error_msg'] = "";
+    }
+
+    Flight::json($request,200);
 });
 
 
@@ -407,22 +443,22 @@ Flight::route('GET /chat/@id/on_message', function ($chat_id) {
 /*
  * Обновление информации о пользователе
  */
-Flight::route('GET /user/update', function (){
+Flight::route('POST /my/profile/update', function (){
 
     $token = '';
     $name = '';
     $email = '';
     $responce = array();
 
-    if(isset($_GET['token'])){
-        $token = $_GET['token'];
+    if(isset($_POST['token'])){
+        $token = $_POST['token'];
 
-        if(isset($_GET['name'])){
-            $name = $_GET['name'];
+        if(isset($_POST['name'])){
+            $name = $_POST['name'];
             $query = Flight::dbH()->query("UPDATE users SET name='$name' WHERE users.token='$token'");
         }
-        if(isset($_GET['email'])){
-            $email = $_GET['email'];
+        if(isset($_POST['email'])){
+            $email = $_POST['email'];
             $query = Flight::dbH()->query("UPDATE users SET email='$email' WHERE users.token = '$token'");
         }
 
