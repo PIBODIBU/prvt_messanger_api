@@ -559,6 +559,8 @@ Flight::route('GET my/contacts/@id/delete',function ($contact_id){
         $response = array('error' => true, 'error_msg' => 'cant fatch user');
     }
 
+    Flight::json($response,200);
+
 });
 
 /**
