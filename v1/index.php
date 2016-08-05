@@ -142,10 +142,6 @@ Flight::route('GET /contacts', function () {
  */
 Flight::route('GET /my/chats', function () {
 
-    $limit = $_GET['limit'];
-    $offset = $_GET['offset'];
-
-
     verifyRequiredParams(array('token'));
 
     $token = $_GET['token'];
@@ -178,7 +174,7 @@ Flight::route('GET /my/chats', function () {
         $chat_id = $row['chat_id'];
 
         //get chat name
-        $query_chat = Flight::dbH()->query("SELECT name,type FROM chat_rooms WHERE chat_room_id='$chat_id' LIMIT $offset,$limit");
+        $query_chat = Flight::dbH()->query("SELECT name,type FROM chat_rooms WHERE chat_room_id='$chat_id'");
         $result = $query_chat->fetch_assoc();
         $chat_name = $result['name'];
         $chat_type = $result['type']; //chat type: 0-dialogue, 1-conference
@@ -333,15 +329,17 @@ Flight::route('POST /chat/@id/delete', function ($chat_id) {
 
     $request = array();
 
-    if(Flight::dbH()->getUser($token) === NULL){
-        $request['error']  = true;
-        $request['error_msg'] = "can't fatch user";
-    } else{
-        $query = Flight::dbH()->query("DELETE * FROM chat_relations WHERE chat_id='$chat_id'");
-        $query = Flight::dbH()->query("DELETE * FROM chat_rooms WHERE chat_room_id='$chat_id'");
+    if(Flight::dbH()->getUser($token) != NULL){
+        $query = Flight::dbH()->query("DELETE FROM chat_relations WHERE chat_id='$chat_id'");
+        $query = Flight::dbH()->query("DELETE FROM chat_rooms WHERE chat_room_id='$chat_id'");
 
         $request['error'] = false;
         $request['error_msg'] = "";
+
+
+    } else{
+        $request['error']  = true;
+        $request['error_msg'] = "can't fatch user";
     }
 
     Flight::json($request,200);
@@ -440,7 +438,7 @@ Flight::route('GET /chat/@id/on_message', function ($chat_id) {
 
 });
 
-/*
+/**
  * Обновление информации о пользователе
  */
 Flight::route('POST /my/profile/update', function (){
