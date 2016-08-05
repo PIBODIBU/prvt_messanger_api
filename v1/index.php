@@ -490,9 +490,74 @@ Flight::route('GET /my/contacts', function (){
 });
 
 /**
- *
+ * Добавление произвольных контактов
  */
 Flight::route('POST /my/contacts/add', function (){
+    $token = $_POST['token'];
+    $phone = $_POST['phone'];
+    $name = $_POST['name'];
+
+    $user = Flight::dbH()->getUser($token);
+
+    if($user != NULL){
+        $user_id = $user['user_id'];
+        $is_registered = Flight::dbH()->getUserByPhone($phone) != NULL ? true : false;
+
+        $query = Flight::dbH()->query("INSERT INTO contacts (owner_id, phone, name, is_registered) VALUES ('$user_id','$phone','$name','$is_registered')");
+
+        $response = array('error' => false, 'error_msg' => '');
+    } else{
+        $response = array('error' => true, 'error_msg' => 'cant fatch user');
+    }
+
+    Flight::json($response,200);
+});
+
+/**
+ * Обновление информации о контакте
+ */
+Flight::route('POST /my/contacts/@id/update', function ($contact_id){
+    $token = $_POST['token'];
+    $phone = $_POST['phone'];
+    $name = $_POST['name'];
+
+    $user = Flight::dbH()->getUser($token);
+
+    $response = array();
+
+    if($user != NULL){
+
+        $query = Flight::dbH()->query("UPDATE contacts SET name='$name',phone='$phone' WHERE contacts.contact_id='$contact_id'");
+
+
+
+        $response = array('error' => false, 'error_msg' => '');
+    } else{
+        $response = array('error' => true, 'error_msg' => 'cant fatch user');
+    }
+
+    Flight::json($response,200);
+});
+
+/**
+ *  Удаление контактов
+ */
+Flight::route('GET my/contacts/@id/delete',function ($contact_id){
+    $token = $_GET['token'];
+
+    $user = Flight::dbH()->getUser($token);
+
+    $response = array();
+
+    if($user != NULL) {
+
+        $query = Flight::dbH()->query("DELETE FROM contacts WHERE contact_id='$contact_id'");
+
+        $response = array('error' => false, 'error_msg' => '');
+    } else{
+
+        $response = array('error' => true, 'error_msg' => 'cant fatch user');
+    }
 
 });
 

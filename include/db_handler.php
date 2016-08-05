@@ -50,6 +50,13 @@ class DbHandler
         return isset($user) ? $user : NULL;
     }
 
+    public function getUserByPhone($phone)
+    {
+        $query = $this->conn->query("SELECT * FROM users WHERE phone='$phone'");
+        $user = $query->fetch_assoc();
+        return isset($user) ? $user : NULL;
+    }
+
 
     /**
      *Получить всю информацию о всех пользователять, кроме пользоветеля @ignore_user
