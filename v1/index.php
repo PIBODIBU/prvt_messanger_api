@@ -142,8 +142,6 @@ Flight::route('GET /contacts', function () {
  */
 Flight::route('GET /my/chats', function () {
 
-    verifyRequiredParams(array('token'));
-
     $token = $_GET['token'];
 
     $my_rooms = array();
@@ -231,7 +229,6 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
     $limit = $_GET['limit'];
     $response = array();
 
-    verifyRequiredParams(array('token'));
     if (!isTokenValid($token)) {
         $response = array(
             'error' => true,
@@ -282,8 +279,6 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
 Flight::route('POST /user/logout', function () {
     $token = $_POST['token'];
     $response = array();
-
-    verifyRequiredParams(array('token'));
 
     $query = Flight::dbH()->query("UPDATE users SET gcm_registration_id='' WHERE BINARY token='$token'");
 
@@ -471,6 +466,35 @@ Flight::route('POST /my/profile/update', function (){
     Flight::json($responce,200);
 });
 
+/**
+ *  Загрузка моих контактов
+ */
+Flight::route('GET /my/contacts', function (){
+    $token = $_GET['token'];
+
+    $request = array();
+    $user = Flight::dbH()->getUser($token);
+
+    if($user != NULL){
+        $user_id = $user['user_id'];
+        $query = Flight::dbH()->query("SELECT * FROM contacts WHERE owner_id='$user_id' ORDER BY name");
+
+        while ($row = $query->fetch_assoc()){
+            $request[] = $row;
+        }
+
+    } else{
+    }
+
+    Flight::json($request,200);
+});
+
+/**
+ *
+ */
+Flight::route('POST /my/contacts/add', function (){
+
+});
 
 /**
  * Verifying required params posted or not
