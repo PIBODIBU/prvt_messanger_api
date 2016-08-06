@@ -611,6 +611,22 @@ Flight::route('GET /chat/@id/delete_user', function ($chat_id){
     }
 });
 
+/**
+ * Изменение имеи диалога
+ */
+Flight::route('GET /chat/@id/update', function ($chat_id){
+    $token = $_GET['token'];
+    $chat_name = $_GET['chat_name'];
+
+    if(Flight::dbH()->getUser($token) != NULL){
+        $query = Flight::dbH()->query("UPDATE chat_rooms SET name='$chat_name' WHERE chat_rooms.chat_room_id='$chat_id'");
+    } else{
+
+    }
+
+});
+
+
 
 //////////////////
 /**
