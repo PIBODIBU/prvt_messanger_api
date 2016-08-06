@@ -565,6 +565,58 @@ Flight::route('GET my/contacts/@id/delete',function ($contact_id){
 });
 
 
+/////////////////////////////////////
+/**
+ * Редактирование комнаты чата
+ */
+
+/**
+ * Добавление пользователя в чат
+ */
+Flight::route('GET /chat/@id/add_user',function ($chat_id){
+    $user_id = $_GET['user_id'];
+    $token = $_GET['token'];
+
+    if(Flight::dbH()->getUser($token) != NULL){
+        $query =Flight::dbH()->query("SELECT * FROM chat_relations WHERE chat_id='$chat_id' AND user_id='$user_id'");
+        if($query->fetch_assoc()){
+
+        } else{
+            $query =Flight::dbH()->query("INSERT INTO chat_relations (chat_id, user_id) VALUES ('$chat_id','$user_id')");
+        }
+
+    } else{
+
+    }
+
+});
+
+/**
+ * Удаление пользователя из чата
+ */
+Flight::route('GET /chat/@id/delete_user', function ($chat_id){
+    $user_id = $_GET['user_id'];
+    $token = $_GET['token'];
+
+    if(Flight::dbH()->getUser($token) != NULL){
+        $query =Flight::dbH()->query("SELECT * FROM chat_relations WHERE chat_id='$chat_id' AND user_id='$user_id'");
+        if($query->fetch_assoc()){
+            $query =Flight::dbH()->query("DELETE FROM chat_relations WHERE chat_id='$chat_id' AND user_id='$user_id'");
+        } else{
+
+        }
+
+    } else{
+
+    }
+});
+
+
+//////////////////
+/**
+ * BIG DATA
+ */
+
 /**
  * Добавить много сообщений
  */
