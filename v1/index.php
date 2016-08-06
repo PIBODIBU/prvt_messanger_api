@@ -577,18 +577,22 @@ Flight::route('GET /chat/@id/add_user',function ($chat_id){
     $user_id = $_GET['user_id'];
     $token = $_GET['token'];
 
+    $responce = array();
+
     if(Flight::dbH()->getUser($token) != NULL){
         $query =Flight::dbH()->query("SELECT * FROM chat_relations WHERE chat_id='$chat_id' AND user_id='$user_id'");
         if($query->fetch_assoc()){
-
+            $responce = array('error' => true, 'error_msg' => 'cant fatch user');
         } else{
             $query =Flight::dbH()->query("INSERT INTO chat_relations (chat_id, user_id) VALUES ('$chat_id','$user_id')");
+
         }
 
     } else{
-
+        $responce = array('error' => false, 'error_msg' => '');
     }
 
+    Flight::json($responce,200);
 });
 
 /**
@@ -602,13 +606,16 @@ Flight::route('GET /chat/@id/delete_user', function ($chat_id){
         $query =Flight::dbH()->query("SELECT * FROM chat_relations WHERE chat_id='$chat_id' AND user_id='$user_id'");
         if($query->fetch_assoc()){
             $query =Flight::dbH()->query("DELETE FROM chat_relations WHERE chat_id='$chat_id' AND user_id='$user_id'");
+            $responce = array('error' => false, 'error_msg' => '');
         } else{
 
         }
 
     } else{
-
+        $responce = array('error' => true, 'error_msg' => 'cant fatch user');
     }
+
+    Flight::json($responce,200);
 });
 
 /**
@@ -620,10 +627,12 @@ Flight::route('GET /chat/@id/update', function ($chat_id){
 
     if(Flight::dbH()->getUser($token) != NULL){
         $query = Flight::dbH()->query("UPDATE chat_rooms SET name='$chat_name' WHERE chat_rooms.chat_room_id='$chat_id'");
+        $responce = array('error' => false, 'error_msg' => '');
     } else{
-
+        $responce = array('error' => true, 'error_msg' => 'cant fatch user');
     }
 
+    Flight::json($responce,200);
 });
 
 
