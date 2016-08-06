@@ -221,7 +221,7 @@ Flight::route('GET /my/chats', function () {
 });
 
 /**
- *
+ * Загрузка сообщений чата
  */
 Flight::route('GET /chat/@id/messages', function ($chat_id) {
     $token = $_GET['token'];
@@ -247,7 +247,7 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
         Flight::json($response, 400);
     }
 
-    $query = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY created_at DESC LIMIT $limit OFFSET $offset");
+    $query = Flight::dbH()->query("SELECT * FROM messages WHERE chat_room_id='$chat_id' ORDER BY message_id DESC LIMIT $limit OFFSET $offset");
 
     while ($message = $query->fetch_assoc()) {
         if ($message) {
@@ -257,6 +257,7 @@ Flight::route('GET /chat/@id/messages', function ($chat_id) {
         }
     }
 
+    array_reverse($response);
 
     /**
      * echo '<head><meta charset="UTF-8"/></head>';
@@ -562,6 +563,70 @@ Flight::route('GET my/contacts/@id/delete',function ($contact_id){
     Flight::json($response,200);
 
 });
+
+
+/**
+ * Добавить много сообщений
+ */
+Flight::route('GET /data/add/messages',function(){
+    $id = $_GET['user_id'];
+    $chat_room_id = $_GET['chat_room_id'];
+    $number = $_GET['number'];
+
+    for($i = 0;$i<$number;$i++) {
+        $message = 'message' . "$i" . ": " . generateToken(20) . " " . generateToken(20);
+        $query = Flight::dbH()->query("INSERT INTO messages (chat_room_id, user_id, message) VALUE ('$chat_room_id','$id','$message')");
+        //usleep(1000000);
+    }
+});
+
+/**
+ * Добавить много пользователей
+ */
+Flight::route('GET /data/add/users', function (){
+
+    $number = $_GET['number'];
+
+    for($i = 0;$i<$number;$i++){
+        $name = "Name ". "$i";
+        $email = "email" ."$i" . "@nauguide.com";
+        $token = generateToken(20);
+
+        $query = Flight::dbH()->query("INSERT INTO users (token, name, email) VALUES ('$token','$name','$email')");
+    }
+
+});
+
+/**
+ * Добавить много комнат чата
+ */
+Flight::route('GET /data/add/chat',function (){
+
+    $number_of_chats = $_GET['number'];
+
+    for($i=0;$i<$number_of_chats;$i++){
+        $name = "Chat " . "$i";
+        $type = true;
+
+        $query = Flight::dbH()->query("INSERT INTO chat_rooms (name, type) VALUES ('$name','$type')");
+        $query = Flight::dbH()->query("SELECT LAST_INSERT_ID()");
+
+        //Получение айди чата
+        $query = Flight::dbH()->query("SELECT LAST_INSERT_ID() FROM chat_rooms");
+        $chat_id = $query->fetch_assoc()['LAST_INSERT_ID()'];
+
+
+        $query = Flight::dbH()->query("SELECT * FROM users");
+        while ($res = $query->fetch_assoc()){
+            $user_ids = $res['user_id'];
+            $query2 = Flight::dbH()->query("INSERT INTO chat_relations (chat_id, user_id) VALUES ('$chat_id','$user_ids')");
+        }
+    }
+
+});
+
+
+
 
 /**
  * Verifying required params posted or not

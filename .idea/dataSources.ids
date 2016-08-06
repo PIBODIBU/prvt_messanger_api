@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="dataSourceStorage">
   <data-source name="MySQL - teamtest_prvt_chat@138.201.140.146" uuid="f6616405-d77b-48d3-889a-a274bd714fdf">
-    <database-info product="MySQL" version="5.5.5-10.0.25-MariaDB-cll-lve" jdbc-version="4.0" driver-name="MySQL Connector Java" driver-version="mysql-connector-java-5.1.35 ( Revision: 5fb9c5849535c13917c2cf9baaece6ef9693ef27 )">
-      <extra-name-characters>#@</extra-name-characters>
-      <identifier-quote-string>`</identifier-quote-string>
-    </database-info>
-    <case-sensitivity plain-identifiers="exact" quoted-identifiers="exact"/>
+    <database-info product="" version="" jdbc-version="" driver-name="" driver-version=""/>
     <database-model serializer="dbm" rdbms="MYSQL" format-version="2.6">
       <schema id="1" name="teamtest_prvt_chat">
         <visible>1</visible>
