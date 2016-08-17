@@ -89,6 +89,10 @@ Flight::route('POST /user/login', function () {
             $error['error_msg'] = 'Error occurred during login';
         }
     }
+
+    //обновление isregistereg в списках контактов
+    $query = Flight::dbH()->query("UPDATE contacts SET is_registered='1' WHERE phone='$phone'");
+
     $response['error'] = $error;
     Flight::json($response, 200);
 });
@@ -127,6 +131,39 @@ Flight::route('GET /contacts', function () {
     }
 
 
+});
+
+
+Flight::route('GET /my/contacts/user', function () {
+    $token = $_GET['token'];
+    $phone = $_GET['phone'];
+
+    $user = Flight::dbH()->getUser($token);
+
+    if ($user == NULL) {
+        error("such token doesn't exist");
+        exit();
+    }
+
+    $response = Flight::dbH()->getUserByPhone($phone);
+
+
+    $owner_id = $user['id'];
+    $query = Flight::dbH()->query("SELECT * FROM contacts WHERE owner_id='$owner_id' AND phone='$phone'");
+    $result = $query->fetch_assoc();
+
+    if($result === NULL){
+        error("error contact access");
+        exit();
+    }
+
+    if ($response != NULL) {
+        unset($response['token']);
+        unset($response['gcm_registration_id']);
+        unset($response['created_at']);
+    }
+
+    Flight::json($response);
 });
 
 /**
@@ -582,14 +619,16 @@ Flight::route('GET /chat/@id/add_user',function ($chat_id){
     if(Flight::dbH()->getUser($token) != NULL){
         $query =Flight::dbH()->query("SELECT * FROM chat_relations WHERE chat_id='$chat_id' AND user_id='$user_id'");
         if($query->fetch_assoc()){
-            $responce = array('error' => true, 'error_msg' => 'cant fatch user');
+
         } else{
             $query =Flight::dbH()->query("INSERT INTO chat_relations (chat_id, user_id) VALUES ('$chat_id','$user_id')");
 
         }
+        $responce = array('error' => false, 'error_msg' => '');
 
     } else{
-        $responce = array('error' => false, 'error_msg' => '');
+
+        $responce = array('error' => true, 'error_msg' => 'cant fatch user');
     }
 
     Flight::json($responce,200);
